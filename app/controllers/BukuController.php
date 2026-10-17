@@ -26,7 +26,16 @@ class BukuController
             $_SESSION['feedback'] = ['tipe' => 'sukses', 'konten' => 'Buku baru berhasil didaftarkan!'];
             header('Location: index.php?page=buku');
             exit;
+        } catch (PDOException $e) {
+            // Galat database: kode 1062 berarti ISBN (kolom UNIQUE) sudah ada
+            $teks = ((int) ($e->errorInfo[1] ?? 0) === 1062)
+                ? 'ISBN sudah terdaftar.'
+                : 'Terjadi kesalahan saat menyimpan data.';
+            $_SESSION['feedback'] = ['tipe' => 'gagal', 'konten' => $teks];
+            header('Location: index.php?page=buku&action=create');
+            exit;
         } catch (Exception $e) {
+            // Galat validasi dari sanitizeAndValidate()
             $_SESSION['feedback'] = ['tipe' => 'gagal', 'konten' => $e->getMessage()];
             header('Location: index.php?page=buku&action=create');
             exit;
@@ -55,6 +64,13 @@ class BukuController
             $this->model->update($id, $input);
             $_SESSION['feedback'] = ['tipe' => 'sukses', 'konten' => 'Data buku sukses diperbarui!'];
             header('Location: index.php?page=buku');
+            exit;
+        } catch (PDOException $e) {
+            $teks = ((int) ($e->errorInfo[1] ?? 0) === 1062)
+                ? 'ISBN sudah terdaftar.'
+                : 'Terjadi kesalahan saat memperbarui data.';
+            $_SESSION['feedback'] = ['tipe' => 'gagal', 'konten' => $teks];
+            header('Location: index.php?page=buku&action=edit&id=' . $id);
             exit;
         } catch (Exception $e) {
             $_SESSION['feedback'] = ['tipe' => 'gagal', 'konten' => $e->getMessage()];
